@@ -4,14 +4,11 @@ import APIKey
 from time import sleep
 import subprocess
 import threading
+import logging
 
 TemplateArg = r'streamlink --hls-live-edge 1 "https://www.youtube.com/watch?v={}" "best" -O | ffmpeg -re -i pipe:0 -c copy -f flv rtmp://localhost/flv/{}'
 workingdir = r'/web/hls'
-threads = []
-
-while True:
-    checkLive()
-    sleep(1)
+rbcThreads = {}
 
 
 def checkLive():
@@ -19,17 +16,31 @@ def checkLive():
         r = requests.get(
             "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=%s&key=%s" % (id, APIKey.key))
         j = r.json()
-        print('[%s,%s]liveBroadcastContent:%s' %
-              (name, id, j['items']['snippet']['liveBroadcastContent']))
-        if j['items']['snippet']['liveBroadcastContent'] == 'live':
-            threads.append(RebroadcastThread(len(threads), name, id))
-            threads[len(threads)-1].start()
-        elif j['items']['snippet']['liveBroadcastContent'] == 'none':
-            print('[%s,%s]not a live stream' % (name, id))
+        logging.debug('[%s,%s]liveBroadcastContent:%s' %
+                      (name, id, j['items'][0]['snippet']['liveBroadcastContent']))
+        if j['items'][0]['snippet']['liveBroadcastContent'] == 'live':
+            if name in rbcThreads:
+                logging.debug('[%s,%s]already start' % (name, id))
+            else:
+                rbcThreads[name] = RebroadcastThread(len(rbcThreads), name, id)
+                rbcThreads[name].start()
+        elif j['items'][0]['snippet']['liveBroadcastContent'] == 'none':
+            logging.debug('[%s,%s]not a live stream' % (name, id))
             getLiveStreams.streamID.pop(name)
         else:
-            print('[%s,%s]err:liveBroadcastContent' % (name, id))
+            logging.error('[%s,%s]err:liveBroadcastContent' % (name, id))
         sleep(1)
+
+
+class CheckLiveThread (threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        logging.debug('启动直播检测')
+        while True:
+            checkLive()
+            sleep(1)
 
 
 class RebroadcastThread (threading.Thread):
@@ -41,9 +52,22 @@ class RebroadcastThread (threading.Thread):
 
     def run(self):
         arg = TemplateArg.format(self.id, self.name)
-        print(self.id+":开始转播")
-        ret = subprocess.run(arg, encoding='utf-8', cwd=workingdir)
+        logging.debug(self.id+":开始转播")
+        ret = subprocess.run(arg, shell=True, encoding='utf-8', cwd=workingdir)
         if ret.returncode == 0:
-            print(self.id+':转播完成')
+            logging.debug(self.id+':转播完成')
         else:
-            print("err:startRebroadcast")
+            logging.error("err:startRebroadcast")
+        # rbcThreads.pop(self.name)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        format='%(asctime)s[%(levelname)s]%(threadName)s>%(message)s', level=logging.DEBUG)
+    checkthread = CheckLiveThread().start()
+    while True:
+        cmd = input('rbc>').split(" ")
+        if cmd[0] == 'add':
+            getLiveStreams.manualAdd(cmd[1], cmd[2])
+        else:
+            pass
