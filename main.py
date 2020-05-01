@@ -1,5 +1,5 @@
 import requests
-import getLiveStreams
+import LiveStreams
 import APIKey
 from time import sleep
 import subprocess
@@ -12,7 +12,8 @@ rbcThreads = {}
 
 
 def checkLive():
-    for name, id in getLiveStreams.streamID.items():
+    for name in LiveStreams.streamID:
+        id = LiveStreams.streamID[name]
         r = requests.get(
             "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=%s&key=%s" % (id, APIKey.key))
         j = r.json()
@@ -26,7 +27,7 @@ def checkLive():
                 rbcThreads[name].start()
         elif j['items'][0]['snippet']['liveBroadcastContent'] == 'none':
             logging.debug('[%s,%s]not a live stream' % (name, id))
-            getLiveStreams.streamID.pop(name)
+            LiveStreams.streamID.pop(name)
         else:
             logging.error('[%s,%s]err:liveBroadcastContent' % (name, id))
         sleep(1)
@@ -68,6 +69,6 @@ if __name__ == "__main__":
     while True:
         cmd = input('rbc>').split(" ")
         if cmd[0] == 'add':
-            getLiveStreams.manualAdd(cmd[1], cmd[2])
+            LiveStreams.manualAdd(cmd[1], cmd[2])
         else:
             pass
