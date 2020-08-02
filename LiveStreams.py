@@ -20,8 +20,8 @@ class StreamerManager:
         self.discord = discord
 
     def Add(self, name, channelId):
-        for name, streamer in list(self.streamers.items()):
-            if streamer.channelId == string or name == string:
+        for streamername, streamer in list(self.streamers.items()):
+            if streamer.channelId == channelId or streamername == name:
                 print(f'已经添加过了[{name}]{streamer.channelId}')
                 return f'已经添加过了[{name}]{streamer.channelId}'
         self.streamers[name] = Streamer(name, channelId, self.discord)

@@ -31,6 +31,18 @@ def exception_handler(loop, context):
     logging.error('Exception handler called')
     traceback.print_exc()
 
+# https://github.com/klen/muffin/issues/18#issuecomment-182138773
+# avoid frustrating INFO messages about timeout caused by sleep(1)
+class SkipTimeouts(logging.Filter):
+    def filter(self, rec):
+        if(rec.levelno == logging.INFO and
+           rec.msg.startswith('poll') and
+           rec.msg.endswith(': timeout') and
+           990 < rec.args[0] < 1000 and
+           1000 < rec.args[1] < 1010):
+            return False  # hide this record
+        return True
+
 if __name__ == "__main__":
     logging.basicConfig(
         format='%(asctime)s[%(levelname)s]%(threadName)s>%(message)s', level=logging.DEBUG)
@@ -38,6 +50,7 @@ if __name__ == "__main__":
     logging.info('eventloop已启动')
     asyncio.get_event_loop().set_debug(True)
     asyncio.get_event_loop().set_exception_handler(exception_handler)
+    logging.getLogger('asyncio').addFilter(SkipTimeouts())
     ########
     discord = Discord.DiscordClient()
     manager = LiveStreams.StreamerManager(discord)
