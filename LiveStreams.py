@@ -19,12 +19,6 @@ class StreamerManager:
     def __init__(self, discord=None):
         self.discord = discord
 
-    async def run(self):
-        logging.debug('启动直播流管理')
-        # while True:
-        #     for name, streamer in list(self.streamers.items()):
-        #         state = streamer.getState()
-
     def Add(self, name, channelId):
         for name, streamer in list(self.streamers.items()):
             if streamer.channelId == string or name == string:

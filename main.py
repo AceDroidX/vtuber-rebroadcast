@@ -7,6 +7,7 @@ import asyncio
 import traceback
 import aioconsole
 import Discord
+import config
 
 
 async def mainConsole(manager):
@@ -35,15 +36,17 @@ if __name__ == "__main__":
         format='%(asctime)s[%(levelname)s]%(threadName)s>%(message)s', level=logging.DEBUG)
     logging.getLogger('discord').setLevel(logging.INFO)
     logging.info('eventloop已启动')
+    asyncio.get_event_loop().set_debug(True)
+    asyncio.get_event_loop().set_exception_handler(exception_handler)
+    ########
     discord = Discord.DiscordClient()
     manager = LiveStreams.StreamerManager(discord)
     discord.set_manage(manager)
     # manager.Add('tamaki','UC8NZiqKx6fsDT3AVcMiVFyA')
     # add matsuri UCQ0UDLQCjY0rmuxCDE38FGg
     # add kizunaai UC4YaOt1yT-ZeyB0OmxHgolA
-    asyncio.get_event_loop().set_debug(True)
     asyncio.ensure_future(discord.start(APIKey.dc_bot_token))
-    asyncio.ensure_future(manager.run())
     asyncio.ensure_future(mainConsole(manager))
-    asyncio.get_event_loop().set_exception_handler(exception_handler)
+    asyncio.ensure_future(config.autoSave())
+    ########
     asyncio.get_event_loop().run_forever()

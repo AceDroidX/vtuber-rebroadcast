@@ -2,6 +2,7 @@ import APIKey
 import logging
 import discord
 import asyncio
+import config
 
 
 class DiscordClient(discord.Client):
@@ -10,12 +11,14 @@ class DiscordClient(discord.Client):
     def __init__(self, manage=None):
         super().__init__()
         self.manage = manage
+        self.config = config.configjson['discord']
 
     def set_manage(self, manage):
         self.manage = manage
 
     async def on_ready(self):
         print(f'Discord:We have logged in as {self.user}')
+        await self.send_message('vtuber转播助手已启动')
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -25,8 +28,8 @@ class DiscordClient(discord.Client):
         if message.content.startswith('/vtblive hello'):
             await message.channel.send('Hello!')
         elif message.content.startswith('/vtblive init'):
-            self.channel = message.channel
-            await message.channel.send('初始化成功channel.name:'+self.channel.name)
+            self.set_config('channel', message.channel.id)
+            await message.channel.send('初始化成功channel.name:'+message.channel.name)
         elif message.content.startswith('/vtblive add'):
             cmd = message.content.split(" ")
             await message.channel.send(self.manage.Add(cmd[2], cmd[3]))
@@ -35,7 +38,18 @@ class DiscordClient(discord.Client):
             await message.channel.send(self.manage.Del(cmd[2]))
 
     async def send_message(self, msg):
-        if self.channel is None:
-            logging.warn('self.channel is None')
+        channel = self.get_channel(self.get_config('channel'))
+        if channel is None:
+            logging.warn('channel is None')
             return
-        await self.channel.send(msg)
+        await channel.send(msg)
+
+    def get_config(self, key):
+        if key in self.config:
+            return self.config[key]
+        else:
+            return None
+
+    def set_config(self, key, value):
+        self.config[key] = value
+        config.configjson['discord'] = self.config
