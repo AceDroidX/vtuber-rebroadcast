@@ -13,7 +13,11 @@ import Discord
 
 
 class StreamerManager:
+    discord = None
     streamers = {}
+
+    def __init__(self, discord=None):
+        self.discord = discord
 
     async def run(self):
         logging.debug('启动直播流管理')
@@ -22,7 +26,7 @@ class StreamerManager:
         #         state = streamer.getState()
 
     def Add(self, name, channelId):
-        self.streamers[name] = Streamer(name, channelId)
+        self.streamers[name] = Streamer(name, channelId, self.discord)
         print('成功添加:['+name+']'+channelId)
         return '成功添加:['+name+']'+channelId
 
@@ -57,11 +61,11 @@ class Streamer:
             state = await self.check()
             logging.debug(f'state:{state}--self.state:{self.state}')
             if state != self.state:
-                self.changeRebroadcast(state)
+                await self.changeRebroadcast(state)
                 self.state = state
             await asyncio.sleep(15)
 
-    def changeRebroadcast(self, state):
+    async def changeRebroadcast(self, state):
         logging.debug(f'改变转播状态:[{self.name}]{state}')
         if not state is None:  # 正在直播中
             if not self.rbcThread is None:
@@ -72,13 +76,14 @@ class Streamer:
             self.queue.put((self.name, state))
             self.rbcThread = Rebroadcast.RebroadcastThread(self.queue)
             self.rbcThread.start()
-            self.sendMessage(f'{self.name}正在直播中:https://www.youtube.com/watch?v={state}')
+            await self.sendMessage(
+                f'{self.name}正在直播中:https://www.youtube.com/watch?v={state}\n转播链接:https://live.acedroidx.top/?stream={self.name}')
         else:  # 不在直播中
             if not self.rbcThread is None:
                 self.queue.put('stop')
                 self.rbcThread = None
                 self.queue = None
-            self.sendMessage(f'{self.name}直播已结束')
+            await self.sendMessage(f'{self.name}直播已结束')
 
     async def check(self):
         logging.debug('直播状态检测:'+self.name)
@@ -89,5 +94,8 @@ class Streamer:
     def getState(self):
         return self.state
 
-    def sendMessage(self,msg):
-        self.discord.send_message(msg)
+    async def sendMessage(self, msg):
+        if self.discord is None:
+            logging.warning('Streamer.discord is None')
+            return
+        await self.discord.send_message(msg)

@@ -1,24 +1,27 @@
 import APIKey
 import logging
 import discord
+import asyncio
 
 
 class DiscordClient(discord.Client):
-    self.channel = None
+    channel = None
 
-    def __init__(self, manage):
+    def __init__(self, manage=None):
+        super().__init__()
         self.manage = manage
-        self.client = discord.Client()
 
-    async def start(self):
-        await client.start(APIKey.dc_bot_token)
+    def set_manage(self, manage):
+        self.manage = manage
 
     async def on_ready(self):
-        print('Discord:We have logged in as {0.user}'.format(client))
+        print(f'Discord:We have logged in as {self.user}')
 
     async def on_message(self, message):
-        if message.author == client.user:
+        if message.author == self.user:
             return
+        logging.debug(
+            'DiscordClient.on_message.message.content:'+message.content)
         if message.content.startswith('/vtblive hello'):
             await message.channel.send('Hello!')
         elif message.content.startswith('/vtblive init'):
