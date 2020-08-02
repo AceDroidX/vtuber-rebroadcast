@@ -35,6 +35,10 @@ class StreamerManager:
 
 
 class Streamer:
+    state = None
+    rbcThread = None
+    queue = None
+
     def __init__(self, name, channelId):
         self.name = name
         self.channelId = channelId
@@ -46,6 +50,7 @@ class Streamer:
     async def autocheck(self):
         while True:
             state = await self.check()
+            logging.debug(f'state:{state}--self.state:{self.state}')
             if state != self.state:
                 self.changeRebroadcast(state)
                 self.state = state
@@ -54,14 +59,20 @@ class Streamer:
     def changeRebroadcast(self, state):
         logging.debug(f'改变转播状态:[{self.name}]{state}')
         if not state is None:  # 正在直播中
-            if self.rbcThread is None:
-                self.queue = queue.Queue()
-                self.rbcThread = Rebroadcast.RebroadcastThread(self.queue)
-            self.queue.put(self.name, self.channelId)
+            if not self.rbcThread is None:
+                self.queue.put('stop')
+                self.rbcThread = None
+                self.queue = None
+            self.queue = queue.Queue()
+            self.queue.put((self.name, state))
+            self.rbcThread = Rebroadcast.RebroadcastThread(self.queue)
             self.rbcThread.start()
+
         else:  # 不在直播中
             if not self.rbcThread is None:
                 self.queue.put('stop')
+                self.rbcThread = None
+                self.queue = None
 
     async def check(self):
         logging.debug('直播状态检测:'+self.name)

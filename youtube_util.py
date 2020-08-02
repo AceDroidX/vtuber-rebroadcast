@@ -15,7 +15,7 @@ async def getLiveVideoId(id):
 
 
 async def checkIsLive(videoid):
-    fp = urllib.request.urlopen(Request(
+    fp = urllib.request.urlopen(urllib.request.Request(
         f"https://www.youtube.com/watch?v={videoid}", headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.24 Safari/537.36'}))
     mybytes = fp.read()
     fp.close()
@@ -26,7 +26,7 @@ async def checkIsLive(videoid):
 
 
 async def channelId2videoId(channelId):
-    fp = urllib.request.urlopen(Request(
+    fp = urllib.request.urlopen(urllib.request.Request(
         f"https://www.youtube.com/channel/{channelId}/live", headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.24 Safari/537.36'}))
     mybytes = fp.read()
     fp.close()

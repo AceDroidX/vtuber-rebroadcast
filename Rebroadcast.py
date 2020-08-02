@@ -2,6 +2,7 @@ import threading
 import time
 import queue
 import logging
+import subprocess
 
 TemplateArg = r'streamlink --hls-live-edge 1 "https://www.youtube.com/watch?v={}" "best" -O | ffmpeg -re -i pipe:0 -c copy -f flv rtmp://localhost/flv/{}'
 workingdir = r'/web/hls'
@@ -13,6 +14,7 @@ class RebroadcastThread (threading.Thread):
         # self.threadID = threadID
         self.queue = queue
         self.name, self.id = queue.get()
+        logging.debug(f'RebroadcastThread:[name]{self.name}[id]{self.id}')
 
     def run(self):
         arg = TemplateArg.format(self.id, self.name)
