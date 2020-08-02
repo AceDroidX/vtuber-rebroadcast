@@ -26,6 +26,10 @@ class StreamerManager:
         #         state = streamer.getState()
 
     def Add(self, name, channelId):
+        for name, streamer in list(self.streamers.items()):
+            if streamer.channelId == string or name == string:
+                print(f'已经添加过了[{name}]{streamer.channelId}')
+                return f'已经添加过了[{name}]{streamer.channelId}'
         self.streamers[name] = Streamer(name, channelId, self.discord)
         print('成功添加:['+name+']'+channelId)
         return '成功添加:['+name+']'+channelId
