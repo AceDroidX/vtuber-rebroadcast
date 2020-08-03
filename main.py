@@ -1,6 +1,5 @@
 import LiveStreams
 import APIKey
-from time import sleep
 import logging
 import sys
 import asyncio
