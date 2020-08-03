@@ -36,6 +36,8 @@ class DiscordClient(discord.Client):
         elif message.content.startswith('/vtblive del'):
             cmd = message.content.split(" ")
             await message.channel.send(self.manage.Del(cmd[2]))
+        elif message.content.startswith('/vtblive list'):
+            await message.channel.send(self.manage.List())
 
     async def send_message(self, msg):
         channel = self.get_channel(self.get_config('channel'))
