@@ -69,19 +69,19 @@ class Streamer:
             self.rbcThread = None
             self.queue = None
 
-    def getState(self, state=None, type='simple'):
-        if state == None:
+    def getState(self, state='', type='simple'):
+        if state == '':
             state = self.state
         if type == 'simple':
-            if self.state is None:
+            if state is None:
                 return '未直播'
             else:
                 return f'正在直播中：{state}'
         elif type == 'detail':
-            if self.state is None:
+            if state is None:
                 return '未直播'
             else:
-                return '正在直播中：https://www.youtube.com/watch?v={state}\n转播链接：https://live.acedroidx.top/?stream={self.name}'
+                return f'正在直播中：https://www.youtube.com/watch?v={state}\n转播链接：https://live.acedroidx.top/?stream={self.name}'
 
     async def sendMessage(self, msg):
         if self.discord is None:
