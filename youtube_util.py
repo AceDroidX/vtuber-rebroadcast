@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import re
-import urllib.request
 import aiohttp
 
 headers = {
@@ -10,9 +9,9 @@ headers = {
 
 async def getLiveVideoId(id):
     if len(id) == 24:
-        logging.info('channelId:'+id)
+        logging.debug('channelId:'+id)
         videoid = await channelId2videoId(id)
-        logging.info('videoid:'+str(videoid))
+        logging.debug('videoid:'+str(videoid))
         return videoid
     else:
         return await checkIsLive(id)
@@ -38,7 +37,8 @@ async def channelId2videoId(channelId):
                 htmlsource = await r.text()
                 if re.search(r'"isLive\\":true,', htmlsource) is None:  # \"isLive\":true,
                     return None
-                videoid = re.search(r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource)
+                videoid = re.search(
+                    r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource)
                 if re.search(r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource) is None:
                     logging.warn(r're.search[videoId], htmlsource) is None')
                     return None

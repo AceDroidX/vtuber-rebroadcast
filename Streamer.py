@@ -43,7 +43,7 @@ class Streamer:
             await asyncio.sleep(15)
 
     async def changeRebroadcast(self, state):
-        logging.debug(f'改变转播状态:[{self.name}]{state}')
+        logging.info(f'改变转播状态:[{self.name}]{state}')
         if not state is None:  # 正在直播中
             self.startRebroadcast()
             await self.sendMessage(
