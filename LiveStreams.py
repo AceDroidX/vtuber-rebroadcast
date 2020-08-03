@@ -19,8 +19,8 @@ class StreamerManager:
             print('成功添加:['+name+']'+channelId)
             return '成功添加:['+name+']'+channelId
         else:
-            print(f'已经添加过了[{name}]{streamer.channelId}')
-            return f'已经添加过了[{name}]{streamer.channelId}'
+            print(f'已经添加过了[{name}]{channelId}')
+            return f'已经添加过了[{name}]{channelId}'
 
     def Del(self, string):
         if self.delToManager(string):

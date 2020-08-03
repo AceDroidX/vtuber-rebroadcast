@@ -6,6 +6,7 @@ import queue
 import Discord
 import config
 
+
 class Streamer:
     state = None
     rbcThread = None
@@ -45,14 +46,14 @@ class Streamer:
     async def changeRebroadcast(self, state):
         logging.info(f'改变转播状态:[{self.name}]{state}')
         if not state is None:  # 正在直播中
-            self.startRebroadcast()
+            self.startRebroadcast(state)
             await self.sendMessage(
-                f'{self.name}{self.getState("detail")}')
+                f'{self.name}{self.getState(state=state,type="detail")}')
         else:  # 不在直播中
             self.stopRebroadcast()
             await self.sendMessage(f'{self.name}直播已结束')
 
-    def startRebroadcast(self):
+    def startRebroadcast(self, state):
         if not self.rbcThread is None:
             self.queue.put('stop')
             self.rbcThread = None
@@ -68,12 +69,14 @@ class Streamer:
             self.rbcThread = None
             self.queue = None
 
-    def getState(self, type='simple'):
+    def getState(self, state=None, type='simple'):
+        if state == None:
+            state = self.state
         if type == 'simple':
             if self.state is None:
                 return '未直播'
             else:
-                return '正在直播中：{state}'
+                return f'正在直播中：{state}'
         elif type == 'detail':
             if self.state is None:
                 return '未直播'
@@ -83,5 +86,8 @@ class Streamer:
     async def sendMessage(self, msg):
         if self.discord is None:
             logging.warning('Streamer.discord is None')
+            return
+        if not self.discord.is_ready():
+            logging.warning('Streamer.discord is not ready')
             return
         await self.discord.send_message(msg)
