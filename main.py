@@ -27,6 +27,7 @@ async def mainConsole(manager, discord):
         elif cmd[0] == 'send':
             await discord.send_message(cmd[1])
         elif cmd[0] == 'quit' or cmd[0] == 'exit' or cmd[0] == 'q':
+            config.writeConfig()
             sys.exit()
         else:
             print('未知的控制台命令')

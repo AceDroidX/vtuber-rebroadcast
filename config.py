@@ -7,8 +7,16 @@ configpath = 'config.json'
 
 def initConfig():
     global configjson
-    configjson = {'discord': {}, 'streamers': []}
+    configjson = {'discord': {}, 'LiveStreams': {}}
     writeConfig()
+
+
+def checkConfig():
+    global configjson
+    if configjson['discord'] is None:
+        configjson['discord'] = {}
+    if configjson['LiveStreams'] is None:
+        configjson['LiveStreams'] = {}
 
 
 def readConfig():
@@ -31,4 +39,19 @@ async def autoSave():
         writeConfig()
         await asyncio.sleep(1)
 
+
+def get_config(zone, key):
+    global configjson
+    if key in configjson[zone]:
+        return configjson[zone][key]
+    else:
+        return None
+
+
+def set_config(zone, key, value):
+    global configjson
+    configjson[zone][key] = value
+
+
 readConfig()
+checkConfig()

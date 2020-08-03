@@ -18,7 +18,7 @@ class DiscordClient(discord.Client):
 
     async def on_ready(self):
         print(f'Discord:We have logged in as {self.user}')
-        await self.send_message('vtuber转播助手已启动')
+        await self.send_message('vtuber转播助手已启动\n'+self.manage.List())
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -38,6 +38,10 @@ class DiscordClient(discord.Client):
             await message.channel.send(self.manage.Del(cmd[2]))
         elif message.content.startswith('/vtblive list'):
             await message.channel.send(self.manage.List())
+        elif message.content.startswith('/vtblive help'):
+            await message.channel.send(self.manage.List())
+        elif message.content.startswith('/vtblive'):
+            await message.channel.send('未知命令 输入/vtblive help查看帮助')
 
     async def send_message(self, msg):
         channel = self.get_channel(self.get_config('channel'))
@@ -47,11 +51,7 @@ class DiscordClient(discord.Client):
         await channel.send(msg)
 
     def get_config(self, key):
-        if key in self.config:
-            return self.config[key]
-        else:
-            return None
+        return config.get_config('discord', key)
 
     def set_config(self, key, value):
-        self.config[key] = value
-        config.configjson['discord'] = self.config
+        return config.set_config('discord', key, value)
