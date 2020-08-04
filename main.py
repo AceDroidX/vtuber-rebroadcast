@@ -33,8 +33,7 @@ async def mainConsole(manager, discord):
 
 
 def exception_handler(loop, context):
-    logging.error('Exception handler called')
-    traceback.print_exc()
+    logging.error('Exception handler called', exc_info=True)
 
 
 # https://github.com/klen/muffin/issues/18#issuecomment-182138773
@@ -51,9 +50,7 @@ class SkipTimeouts(logging.Filter):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        format='%(asctime)s[%(levelname)s]%(threadName)s>%(message)s', level=logging.DEBUG)
-    logging.getLogger('discord').setLevel(logging.INFO)
+    config.setup_logging()
     logging.info('eventloop已启动')
     asyncio.get_event_loop().set_debug(True)
     asyncio.get_event_loop().set_exception_handler(exception_handler)

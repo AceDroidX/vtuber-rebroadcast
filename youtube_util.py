@@ -8,10 +8,11 @@ headers = {
 
 
 async def getLiveVideoId(id):
+    logger = logging.getLogger('youtube_util')
     if len(id) == 24:
-        logging.debug('channelId:'+id)
+        logger.debug('channelId:'+id)
         videoid = await channelId2videoId(id)
-        logging.debug('videoid:'+str(videoid))
+        logger.debug('videoid:'+str(videoid))
         return videoid
     else:
         return await checkIsLive(id)
@@ -26,7 +27,7 @@ async def checkIsLive(videoid):
                     return None
                 return id
             else:
-                logging.error('checkIsLive.status:'+r.status)
+                logging.getLogger('youtube_util').error('checkIsLive.status:'+r.status)
                 return None
 
 
@@ -40,9 +41,9 @@ async def channelId2videoId(channelId):
                 videoid = re.search(
                     r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource)
                 if re.search(r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource) is None:
-                    logging.warn(r're.search[videoId], htmlsource) is None')
+                    logging.getLogger('youtube_util').warn(r're.search[videoId], htmlsource) is None')
                     return None
                 return videoid.group()
             else:
-                logging.error('channelId2videoId.status:'+r.status)
+                logging.getLogger('youtube_util').error('channelId2videoId.status:'+r.status)
                 return None

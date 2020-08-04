@@ -5,6 +5,7 @@ import Rebroadcast
 import queue
 import Discord
 import config
+import APIKey
 
 
 class Streamer:
@@ -81,7 +82,7 @@ class Streamer:
             if state is None:
                 return '未直播'
             else:
-                return f'正在直播中：https://www.youtube.com/watch?v={state}\n转播链接：https://live.acedroidx.top/?stream={self.name}'
+                return f'正在直播中：https://www.youtube.com/watch?v={state}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
 
     async def sendMessage(self, msg):
         if self.discord is None:
