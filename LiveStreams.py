@@ -16,7 +16,7 @@ class StreamerManager:
     def Add(self, name, channelId):
         config = self.addToManager(name, channelId)
         if config != False:
-            self.addToConfig(name, config)
+            self.addToConfig(config)
             print('成功添加:['+name+']'+channelId)
             return '成功添加:['+name+']'+channelId
         else:
@@ -31,6 +31,28 @@ class StreamerManager:
         else:
             print('找不到'+string)
             return '找不到'+string
+
+    def Set(self, string, key, data):
+        for name, streamer in list(self.streamers.items()):
+            if streamer.channelId == string or name == string:
+                streamer.setConfig(key, data)
+                self.modToConfig(streamer.getConfig())
+                print(f'成功设置[{name}]:{key}={data}')
+                return f'成功设置[{name}]:{key}={data}'
+        print('找不到'+string)
+        return '找不到'+string
+
+    def Get(self, string, key):
+        for name, streamer in list(self.streamers.items()):
+            if streamer.channelId == string or name == string:
+                conf = streamer.getConfig()
+                if not key in conf:
+                    print(f'[{name}]找不到key:{key}')
+                    return f'[{name}]找不到key:{key}'
+                print(f'[{name}]:{key}={conf[key]}')
+                return f'[{name}]:{key}={conf[key]}'
+        print('找不到'+string)
+        return '找不到'+string
 
     def List(self):
         tmp = []
@@ -48,11 +70,11 @@ class StreamerManager:
     def set_config(self, key, value):
         return config.set_config('LiveStreams', key, value)
 
-    def addToConfig(self, string, data):
+    def addToConfig(self, data):
         for streamer in list(self.confstreamers):
-            if streamer['name'] == name or streamer['channelId'] == channelId:
+            if streamer['name'] == data['name'] or streamer['channelId'] == data['channelId']:
                 return False
-        self.confstreamers.append({'name': name, 'channelId': channelId})
+        self.confstreamers.append(data)
         self.set_config('streamers', self.confstreamers)
         return True
 
@@ -64,21 +86,20 @@ class StreamerManager:
                 return True
         return False
 
-    def modToConfig(self, string, data):
-        if not self.delToConfig(string):
-            logging.warn('modToConfig:delToConfig failed')
-            return False
-        if not self.addToConfig(string, data):
-            logging.warn('modToConfig:addToConfig failed')
-            return False
-        return True
+    def modToConfig(self, data):
+        for index in range(len(self.confstreamers)):
+            if self.confstreamers[index]['name'] == data['name'] or self.confstreamers[index]['channelId'] == data['channelId']:
+                self.confstreamers[index] = data
+                self.set_config('streamers', self.confstreamers)
+                return True
+        return False
 
-    def addToManager(self, name, channelId):
+    def addToManager(self, name, channelId, conf=None):
         for streamername, streamer in list(self.streamers.items()):
             if streamer.channelId == channelId or streamername == name:
                 return False
         self.streamers[name] = Streamer.Streamer(
-            name, channelId, self.discord)
+            name, channelId, self.discord, conf)
         return self.streamers[name].getConfig()
 
     def delToManager(self, string):
@@ -96,7 +117,8 @@ class StreamerManager:
             self.set_config('streamers', self.confstreamers)
         if self.streamers == {}:
             for streamer in list(self.confstreamers):
-                self.addToManager(streamer['name'], streamer['channelId'])
+                self.addToManager(streamer['name'],
+                                  streamer['channelId'], streamer)
         else:
             logging.warning('重新加载设置功能还没测试（')
             # self.unload()

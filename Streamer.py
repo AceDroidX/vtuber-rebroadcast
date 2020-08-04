@@ -15,13 +15,16 @@ class Streamer:
     discord = None
     config = {}
 
-    def __init__(self, name, channelId, discord=None):
+    def __init__(self, name, channelId, discord=None, conf=None):
         self.name = name
         self.channelId = channelId
         self.task = asyncio.ensure_future(self.autocheck())
         self.discord = discord
-        self.setConfig('name', name)
-        self.setConfig('channelId', channelId)
+        if conf is None:
+            self.setConfig('name', name)
+            self.setConfig('channelId', channelId)
+        else:
+            self.config = conf
 
     def __str__(self):
         return f'[{self.name}]{self.channelId}：{self.getState()}'
@@ -31,6 +34,9 @@ class Streamer:
 
     def cancel(self):
         self.task.cancel()
+
+    def loadConfig(self, data):
+        self.config = data
 
     def setConfig(self, key, data):
         self.config[key] = data
