@@ -27,7 +27,7 @@ class RebroadcastThread (threading.Thread):
                 item = self.queue.get()
                 if item == 'stop':
                     pp.terminate()
-                    logging.info(name+'转播已停止')
+                    logging.info(self.name+'转播已停止')
                     break
                 else:
                     logging.warn('RebroadcastThread.queue:未知命令')

@@ -13,12 +13,15 @@ class Streamer:
     rbcThread = None
     queue = None
     discord = None
+    config = {}
 
     def __init__(self, name, channelId, discord=None):
         self.name = name
         self.channelId = channelId
         self.task = asyncio.ensure_future(self.autocheck())
         self.discord = discord
+        self.setConfig('name', name)
+        self.setConfig('channelId', channelId)
 
     def __str__(self):
         return f'[{self.name}]{self.channelId}：{self.getState()}'
@@ -28,6 +31,12 @@ class Streamer:
 
     def cancel(self):
         self.task.cancel()
+
+    def setConfig(self, key, data):
+        self.config[key] = data
+
+    def getConfig(self):
+        return self.config
 
     async def check(self):
         # logging.debug('直播状态检测:'+self.name)
@@ -56,6 +65,7 @@ class Streamer:
 
     def startRebroadcast(self, state):
         if not self.rbcThread is None:
+            logging.warning(f'直播id更改，正在重启线程，原id{self.state}:，现id:{state}')
             self.queue.put('stop')
             self.rbcThread = None
             self.queue = None
