@@ -23,13 +23,14 @@ async def checkIsLive(videoid):
         async with session.get(f"https://www.youtube.com/watch?v={videoid}", headers=headers) as r:
             if r.status == 200:
                 htmlsource = await r.text()
-                if re.search(r'"isLive\\":true,', htmlsource) is None:  # \"isLive\":true,
-                    return None
-                return id
+                videoid = re.search(r'"isLive\\":true,', htmlsource)
+                if videoid is None:  # \"isLive\":true,
+                    return {'status': 'None'}
+                return {'videoid': videoid.group(), 'status': 'OK'}
             else:
                 logging.getLogger('youtube_util').error(
                     'checkIsLive.status:'+r.status)
-                return None
+                return {'status': 'None'}
 
 
 async def channelId2videoId(channelId):
@@ -42,15 +43,24 @@ async def channelId2videoId(channelId):
                     with open(f'test-{channelId}.html', 'w') as f:
                         f.write(htmlsource)
                     #
-                    return None
+                    # status\":\"LIVE_STREAM_OFFLINE\",
+                    status = re.search(
+                        r'(?<="status\\":\\")(.*?)(?=\\",)', htmlsource)
+                    if status is None:
+                        return {'status': 'None'}
+                    elif status.group() == 'LIVE_STREAM_OFFLINE':
+                        return {'videoid': re.search(
+                            r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource).group(), 'status': 'LIVE_STREAM_OFFLINE'}
+                    elif status.group() == 'OK':  # 注：这是正常情况，返回的是频道主页界面
+                        return {'status': 'None'}
+                    else:
+                        logging.getLogger('youtube_util').error(
+                            f'channelId2videoId:[{channelId}]未知状态:{status.group()}')
+                        return {'status': 'None'}
                 videoid = re.search(
                     r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource)
-                if re.search(r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource) is None:
-                    logging.getLogger('youtube_util').warn(
-                        r're.search[videoId], htmlsource) is None')
-                    return None
-                return videoid.group()
+                return {'videoid': videoid.group(), 'status': 'OK'}
             else:
                 logging.getLogger('youtube_util').error(
-                    'channelId2videoId.status:'+r.status)
-                return None
+                    f'channelId2videoId.status:{r.status}')
+                return {'status': 'None'}
