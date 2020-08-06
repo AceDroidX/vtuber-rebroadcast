@@ -18,7 +18,7 @@ class DiscordClient(discord.Client):
 
     async def on_ready(self):
         print(f'Discord:We have logged in as {self.user}')
-        await self.send_message('vtuber转播助手已启动\n'+self.manage.List())
+        #await self.send_message('vtuber转播助手已启动\n'+self.manage.List())
 
     async def on_message(self, message):
         try:
@@ -46,7 +46,7 @@ class DiscordClient(discord.Client):
             elif message.content.startswith('/vtblive list'):
                 await self.send_message(self.manage.List(),message.channel)
             elif message.content.startswith('/vtblive help'):
-                await self.send_message('说明在做了（')
+                await self.send_message(self.help())
             elif message.content.startswith('/vtblive'):
                 await self.send_message('未知命令 输入/vtblive help查看帮助',message.channel)
         except IndexError as e:
@@ -71,3 +71,8 @@ class DiscordClient(discord.Client):
 
     def set_config(self, key, value):
         return config.set_config('discord', key, value)
+
+    def help(self):
+        return '''/vtblive add <name> <channelId>：添加一个vtuber到监控列表
+/vtblive del <name>：删除一个vtuber
+/vtblive list：显示当前监控的vtuber的状态'''

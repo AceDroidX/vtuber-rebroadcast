@@ -72,7 +72,7 @@ class Streamer:
             logging.error('Streamer.autocheck.BaseException', exc_info=True)
             await self.sendMessage(f'[{self.name}]autocheck发生错误，请查看日志')
 
-    async def stopRbcCheck(self, state):
+    async def stopRbcCheck(self, state):  # 用于检查是否真的是直播结束
         if(self.state['status'] != 'OK'):
             self.state = state
             await asyncio.sleep(15)
@@ -80,15 +80,18 @@ class Streamer:
         islive = await youtube_util.checkIsLive(self.state["videoid"])
         logging.warning(f'checkIsLive.status:{islive}')
         if islive['status'] == 'OK':
-            logging.warning(f'youtube抽风了\n[{self.name}]直播状态:{state}原状态:{self.state}')
+            logging.warning(
+                f'youtube抽风了\n[{self.name}]直播状态:{state}原状态:{self.state}')
             await asyncio.sleep(15)
             return False
         else:
             if state['status'] == 'OK':
-                logging.warning(f'不是youtube抽风，切换到新的<直播>页面\n[{self.name}]直播状态:{state}原状态:{self.state}')
+                logging.warning(
+                    f'不是youtube抽风，切换到新的<直播>页面\n[{self.name}]直播状态:{state}原状态:{self.state}')
                 self.startRebroadcast(state['videoid'])
             else:
-                logging.warning(f'不是youtube抽风，切换到新的<待机>页面\n[{self.name}]直播状态:{state}原状态:{self.state}')
+                logging.warning(
+                    f'不是youtube抽风，切换到新的<待机>页面\n[{self.name}]直播状态:{state}原状态:{self.state}')
                 await self.stopRebroadcast()
             self.state = state
             await asyncio.sleep(15)
@@ -105,7 +108,7 @@ class Streamer:
         self.queue.put((self.name, videoid))
         self.rbcThread = Rebroadcast.RebroadcastThread(self.queue)
         self.rbcThread.start()
-        await self.sendMessage(f'{self.name}{self.getState(state=videoid,type="detail")}')
+        await self.sendMessage(f'{self.name}{self.getState(state={"videoid":videoid,"status":"OK"},type="detail")}')
 
     async def stopRebroadcast(self):
         logging.info(f'改变转播状态:[{self.name}]stop')
@@ -119,15 +122,15 @@ class Streamer:
         if state == '':
             state = self.state
         if type == 'simple':
-            if state is None:
-                return '未直播'
+            if state['status'] == 'OK':
+                return f'正在直播中：{state["videoid"]}'
             else:
-                return f'正在直播中：{state}'
+                return '未直播'
         elif type == 'detail':
-            if state is None:
-                return '未直播'
+            if state['status'] == 'OK':
+                return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
             else:
-                return f'正在直播中：https://www.youtube.com/watch?v={state}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
+                return '未直播'
 
     async def sendMessage(self, msg):
         if self.discord is None:
