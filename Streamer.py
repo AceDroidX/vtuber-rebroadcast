@@ -41,8 +41,10 @@ class Streamer:
     def setConfig(self, key, data):
         self.config[key] = data
 
-    def getConfig(self):
-        return self.config
+    def getConfig(self, key):
+        if not key in self.config:
+            return None
+        return self.config[key]
 
     async def check(self):
         # logging.debug('直播状态检测:'+self.name)
@@ -98,6 +100,9 @@ class Streamer:
             return True
 
     async def startRebroadcast(self, videoid):
+        if self.getConfig('rbc')=='false':
+            await self.sendMessage(f'{self.name}{self.getState(state={"videoid":videoid,"status":"OK"},type="norbc")}')
+            return
         logging.info(f'改变转播状态:[{self.name}]{videoid}')
         if not self.rbcThread is None:
             logging.warning(f'直播id更改，正在重启线程，原id{self.state}:，现id:{videoid}')
@@ -129,6 +134,11 @@ class Streamer:
         elif type == 'detail':
             if state['status'] == 'OK':
                 return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
+            else:
+                return '未直播'
+        elif type == 'norbc':
+            if state['status'] == 'OK':
+                return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}'
             else:
                 return '未直播'
 

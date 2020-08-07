@@ -36,7 +36,7 @@ class StreamerManager:
         for name, streamer in list(self.streamers.items()):
             if streamer.channelId == string or name == string:
                 streamer.setConfig(key, data)
-                self.modToConfig(streamer.getConfig())
+                self.modToConfig(streamer.config)
                 print(f'成功设置[{name}]:{key}={data}')
                 return f'成功设置[{name}]:{key}={data}'
         print('找不到'+string)
@@ -45,7 +45,7 @@ class StreamerManager:
     def Get(self, string, key):
         for name, streamer in list(self.streamers.items()):
             if streamer.channelId == string or name == string:
-                conf = streamer.getConfig()
+                conf = streamer.config
                 if not key in conf:
                     print(f'[{name}]找不到key:{key}')
                     return f'[{name}]找不到key:{key}'
@@ -100,7 +100,7 @@ class StreamerManager:
                 return False
         self.streamers[name] = Streamer.Streamer(
             name, channelId, self.discord, conf)
-        return self.streamers[name].getConfig()
+        return self.streamers[name].config
 
     def delToManager(self, string):
         for name, streamer in list(self.streamers.items()):
