@@ -76,6 +76,8 @@ class Streamer:
 
     async def stopRbcCheck(self, state):  # 用于检查是否真的是直播结束
         if(self.state['status'] != 'OK'):
+            if self.getConfig('checkOffline')=='true' and state['status'] == 'LIVE_STREAM_OFFLINE':
+                await self.sendMessage(f'{self.name}{self.getState(state=state,type="detail")}')
             self.state = state
             await asyncio.sleep(15)
             return
@@ -100,7 +102,7 @@ class Streamer:
             return True
 
     async def startRebroadcast(self, videoid):
-        if self.getConfig('rbc')=='false':
+        if self.getConfig('rbc')!='true':
             await self.sendMessage(f'{self.name}{self.getState(state={"videoid":videoid,"status":"OK"},type="norbc")}')
             return
         logging.info(f'改变转播状态:[{self.name}]{videoid}')
@@ -129,13 +131,20 @@ class Streamer:
         if type == 'simple':
             if state['status'] == 'OK':
                 return f'正在直播中：{state["videoid"]}'
-            else:
-                return '未直播'
+            elif state['status'] == 'LIVE_STREAM_OFFLINE':
+                if self.getConfig('checkOffline')=='true':
+                    return f'待机界面：{state["videoid"]}'
+            return '未直播'
         elif type == 'detail':
             if state['status'] == 'OK':
-                return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
-            else:
-                return '未直播'
+                if self.getConfig('biliroomid') is None:
+                    return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
+                else:
+                    return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}\nB站直播间：https://live.bilibili.com/{self.getConfig("biliroomid")}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
+            elif state['status'] == 'LIVE_STREAM_OFFLINE':
+                if self.getConfig('checkOffline')=='true':
+                    return f'添加了新的待机界面：https://www.youtube.com/watch?v={state["videoid"]}'
+            return '未直播'
         elif type == 'norbc':
             if state['status'] == 'OK':
                 return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}'
