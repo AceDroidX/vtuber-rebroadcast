@@ -6,6 +6,7 @@ import queue
 import Discord
 import config
 import APIKey
+from datetime import datetime
 
 
 class Streamer:
@@ -76,7 +77,7 @@ class Streamer:
 
     async def stopRbcCheck(self, state):  # 用于检查是否真的是直播结束
         if(self.state['status'] != 'OK'):
-            if self.getConfig('checkOffline')=='true' and state['status'] == 'LIVE_STREAM_OFFLINE':
+            if self.getConfig('checkOffline') == 'true' and state['status'] == 'LIVE_STREAM_OFFLINE':
                 await self.sendMessage(f'{self.name}{self.getState(state=state,type="detail")}')
             self.state = state
             await asyncio.sleep(15)
@@ -102,7 +103,7 @@ class Streamer:
             return True
 
     async def startRebroadcast(self, videoid):
-        if self.getConfig('rbc')!='true':
+        if self.getConfig('rbc') != 'true':
             await self.sendMessage(f'{self.name}{self.getState(state={"videoid":videoid,"status":"OK"},type="norbc")}')
             return
         logging.info(f'改变转播状态:[{self.name}]{videoid}')
@@ -132,7 +133,7 @@ class Streamer:
             if state['status'] == 'OK':
                 return f'正在直播中：{state["videoid"]}'
             elif state['status'] == 'LIVE_STREAM_OFFLINE':
-                if self.getConfig('checkOffline')=='true':
+                if self.getConfig('checkOffline') == 'true':
                     return f'待机界面：{state["videoid"]}'
             return '未直播'
         elif type == 'detail':
@@ -142,8 +143,21 @@ class Streamer:
                 else:
                     return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}\nB站直播间：https://live.bilibili.com/{self.getConfig("biliroomid")}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
             elif state['status'] == 'LIVE_STREAM_OFFLINE':
-                if self.getConfig('checkOffline')=='true':
-                    return f'添加了新的待机界面：https://www.youtube.com/watch?v={state["videoid"]}'
+                if state['scheduledStartTime'] != 'None':
+                    startTime = datetime.fromtimestamp(
+                        state['scheduledStartTime'])
+                    remainTime = startTime-datetime.now()
+                    if remainTime.days > 0:
+                        remainTime = strfdelta(
+                            remainTime, "{days}天{hours}:{minutes}:{seconds}")
+                    else:
+                        remainTime = strfdelta(
+                            remainTime, "{hours}:{minutes}:{seconds}")
+                else:
+                    startTime = 'None'
+                    remainTime = 'None'
+                if self.getConfig('checkOffline') == 'true':
+                    return f'添加了新的待机界面：https://www.youtube.com/watch?v={state["videoid"]}\n开始时间：{startTime}剩余时间：{remainTime}'
             return '未直播'
         elif type == 'norbc':
             if state['status'] == 'OK':
@@ -167,3 +181,15 @@ class Streamer:
     async def sendError(self, msg):
         logging.error(msg)
         await self.sendMessage(f'error：{msg}')
+
+
+# https://stackoverflow.com/questions/8906926/formatting-timedelta-objects
+# >>> print strfdelta(delta_obj, "{days} days {hours}:{minutes}:{seconds}")
+# 1 days 20:18:12
+# >>> print strfdelta(delta_obj, "{hours} hours and {minutes} to go")
+# 20 hours and 18 to go
+def strfdelta(tdelta, fmt):
+    d = {"days": tdelta.days}
+    d["hours"], rem = divmod(tdelta.seconds, 3600)
+    d["minutes"], d["seconds"] = divmod(rem, 60)
+    return fmt.format(**d)

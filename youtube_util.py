@@ -43,14 +43,19 @@ async def channelId2videoId(channelId):
                     with open(f'test-{channelId}.html', 'w') as f:
                         f.write(htmlsource)
                     #
-                    # status\":\"LIVE_STREAM_OFFLINE\",
+                    scheduledStartTime = re.search(
+                        r'(?<="scheduledStartTime\\":\\")(.*?)(?=\\",)', htmlsource)
+                    if scheduledStartTime == None:
+                        scheduledStartTime = 'None'
+                    else:
+                        scheduledStartTime = int(scheduledStartTime.group())
                     status = re.search(
                         r'(?<="status\\":\\")(.*?)(?=\\",)', htmlsource)
                     if status is None:
                         return {'status': 'None'}
                     elif status.group() == 'LIVE_STREAM_OFFLINE':
                         return {'videoid': re.search(
-                            r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource).group(), 'status': 'LIVE_STREAM_OFFLINE'}
+                            r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource).group(), 'status': 'LIVE_STREAM_OFFLINE', 'scheduledStartTime': scheduledStartTime}
                     elif status.group() == 'OK':  # 注：这是正常情况，返回的是频道主页界面
                         return {'status': 'None'}
                     else:
