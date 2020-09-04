@@ -109,7 +109,7 @@ class Streamer:
             return True
 
     async def startRebroadcast(self, videoid):
-        if self.getConfig('rbc') != 'true' and config.get_config('LiveStreams','rbc') != 'true':
+        if self.getConfig('rbc') != 'true' or config.get_config('LiveStreams','rbc') != 'true':
             await self.sendMessage(f'{self.name}{self.getState(state={"videoid":videoid,"status":"OK"},type="detail")}')
             return
         logging.info(f'改变转播状态:[{self.name}]{videoid}')
