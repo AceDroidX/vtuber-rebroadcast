@@ -57,6 +57,12 @@ class Streamer:
         try:
             while True:
                 state = await self.check()
+                if state['status'] == 'Error':
+                    await asyncio.sleep(30)
+                    state = await self.check()
+                    if state['status'] == 'Error':
+                        await self.sendMessage(f'[{self.name}]autocheck获取状态失败，请查看日志')
+                        return
                 logging.debug(f'[{self.name}]直播状态:{state}原状态:{self.state}')
                 if state != self.state:
                     if state['status'] == 'LIVE_STREAM_OFFLINE':
@@ -68,12 +74,12 @@ class Streamer:
                         await self.stopRbcCheck(state)
                         continue
                     else:
-                        await self.sendError('Streamer.autocheck.state["status"]:未知状态')
+                        await self.sendError(f'[{self.name}]Streamer.autocheck.state["status"]:未知状态')
                 self.state = state
                 await asyncio.sleep(15)
         except BaseException as e:
             logging.error('Streamer.autocheck.BaseException', exc_info=True)
-            await self.sendMessage(f'[{self.name}]autocheck发生错误，请查看日志')
+            await self.sendMessage(f'[{self.name}]autocheck发生未知错误，请查看日志')
 
     async def stopRbcCheck(self, state):  # 用于检查是否真的是直播结束
         if(self.state['status'] != 'OK'):
@@ -104,7 +110,7 @@ class Streamer:
 
     async def startRebroadcast(self, videoid):
         if self.getConfig('rbc') != 'true':
-            await self.sendMessage(f'{self.name}{self.getState(state={"videoid":videoid,"status":"OK"},type="norbc")}')
+            await self.sendMessage(f'{self.name}{self.getState(state={"videoid":videoid,"status":"OK"},type="detail")}')
             return
         logging.info(f'改变转播状态:[{self.name}]{videoid}')
         if not self.rbcThread is None:
@@ -138,10 +144,12 @@ class Streamer:
             return '未直播'
         elif type == 'detail':
             if state['status'] == 'OK':
-                if self.getConfig('biliroomid') is None:
-                    return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
-                else:
-                    return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}\nB站直播间：https://live.bilibili.com/{self.getConfig("biliroomid")}\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
+                detailstate = f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}'
+                if self.getConfig('biliroomid') != None:
+                    detailstate += f'\nB站直播间：https://live.bilibili.com/{self.getConfig("biliroomid")}'
+                if self.getConfig('rbc') == 'true':
+                    detailstate += f'\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
+                return detailstate
             elif state['status'] == 'LIVE_STREAM_OFFLINE':
                 if state['scheduledStartTime'] != 'None':
                     startTime = datetime.fromtimestamp(
@@ -159,11 +167,6 @@ class Streamer:
                 if self.getConfig('checkOffline') == 'true':
                     return f'添加了新的待机界面：https://www.youtube.com/watch?v={state["videoid"]}\n开始时间：{startTime}剩余时间：{remainTime}'
             return '未直播'
-        elif type == 'norbc':
-            if state['status'] == 'OK':
-                return f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}'
-            else:
-                return '未直播'
 
     async def sendMessage(self, msg):
         if self.discord is None:
