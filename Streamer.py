@@ -109,7 +109,7 @@ class Streamer:
             return True
 
     async def startRebroadcast(self, videoid):
-        if self.getConfig('rbc') != 'true':
+        if self.getConfig('rbc') != 'true' and config.get_config('LiveStreams','rbc') != 'true':
             await self.sendMessage(f'{self.name}{self.getState(state={"videoid":videoid,"status":"OK"},type="detail")}')
             return
         logging.info(f'改变转播状态:[{self.name}]{videoid}')
@@ -147,7 +147,7 @@ class Streamer:
                 detailstate = f'正在直播中：https://www.youtube.com/watch?v={state["videoid"]}'
                 if self.getConfig('biliroomid') != None:
                     detailstate += f'\nB站直播间：https://live.bilibili.com/{self.getConfig("biliroomid")}'
-                if self.getConfig('rbc') == 'true':
+                if self.getConfig('rbc') == 'true' and config.get_config('LiveStreams','rbc') == 'true':
                     detailstate += f'\n转播链接：{APIKey.rebroadcast_prefix}{self.name}'
                 return detailstate
             elif state['status'] == 'LIVE_STREAM_OFFLINE':
