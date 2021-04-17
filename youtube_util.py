@@ -1,7 +1,9 @@
-import asyncio
+from asyncio.events import get_event_loop
+import sys
 import logging
 import re
 import aiohttp
+import asyncio
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.24 Safari/537.36'}
@@ -24,7 +26,7 @@ async def checkIsLive(videoid):
             async with session.get(f"https://www.youtube.com/watch?v={videoid}", headers=headers) as r:
                 if r.status == 200:
                     htmlsource = await r.text()
-                    videoid = re.search(r'"isLive\\":true,', htmlsource)
+                    videoid = re.search(r'"isLive":true,', htmlsource)
                     if videoid is None:  # \"isLive\":true,
                         return {'status': 'None'}
                     return {'videoid': videoid.group(), 'status': 'OK'}
@@ -43,24 +45,24 @@ async def channelId2videoId(channelId):
             async with session.get(f"https://www.youtube.com/channel/{channelId}/live", headers=headers) as r:
                 if r.status == 200:
                     htmlsource = await r.text()
-                    if re.search(r'"isLive\\":true,', htmlsource) is None:  # \"isLive\":true,
+                    if re.search(r'"isLive":true,', htmlsource) is None:  # \"isLive\":true,
                         # debug
                         with open(f'test-{channelId}.html', 'w') as f:
                             f.write(htmlsource)
                         #
                         scheduledStartTime = re.search(
-                            r'(?<="scheduledStartTime\\":\\")(.*?)(?=\\",)', htmlsource)
+                            r'(?<="scheduledStartTime":")(.*?)(?=",)', htmlsource)
                         if scheduledStartTime == None:
                             scheduledStartTime = 'None'
                         else:
                             scheduledStartTime = int(scheduledStartTime.group())
                         status = re.search(
-                            r'(?<="status\\":\\")(.*?)(?=\\",)', htmlsource)
+                            r'(?<="status":")(.*?)(?=",)', htmlsource)
                         if status is None:
                             return {'status': 'None'}
                         elif status.group() == 'LIVE_STREAM_OFFLINE':
                             return {'videoid': re.search(
-                                r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource).group(), 'status': 'LIVE_STREAM_OFFLINE', 'scheduledStartTime': scheduledStartTime}
+                                r'(?<="videoId":")(.*?)(?=",)', htmlsource).group(), 'status': 'LIVE_STREAM_OFFLINE', 'scheduledStartTime': scheduledStartTime}
                         elif status.group() == 'OK':  # 注：这是正常情况，返回的是频道主页界面
                             return {'status': 'None'}
                         else:
@@ -68,7 +70,7 @@ async def channelId2videoId(channelId):
                                 f'channelId2videoId:[{channelId}]未知状态:{status.group()}')
                             return {'status': 'None'}
                     videoid = re.search(
-                        r'(?<="videoId\\":\\")(.*?)(?=\\",)', htmlsource)
+                        r'(?<="videoId":")(.*?)(?=",)', htmlsource)
                     return {'videoid': videoid.group(), 'status': 'OK'}
                 else:
                     logging.getLogger('youtube_util').error(
@@ -77,3 +79,11 @@ async def channelId2videoId(channelId):
     except BaseException as e:
         logging.error('youtube_util.checkIsLive.BaseException', exc_info=True)
         return {'status': 'Error'}
+
+
+if __name__ == "__main__":
+    # test only
+    loop = asyncio.get_event_loop()
+    task=loop.create_task(channelId2videoId(sys.argv[1]))
+    loop.run_until_complete(task)
+    print(task.result())
